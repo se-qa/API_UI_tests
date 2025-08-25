@@ -28,7 +28,7 @@ jobs:
 
       # Шаг 4: Генерация отчета
       - name: 4. Generate Allure Report
-        run: docker run --rm -v $(pwd)/allure-results:/app/allure-results -v $(pwd)/allure-report:/app/allure-report allure/allure-commandline generate /app/allure-results --clean -o /app/allure-report
+        run: docker run --rm -v $(pwd)/allure-results:/allure-results -v $(pwd)/allure-report:/allure-report smartcosmos/allure-commandline generate /allure-results --clean -o /allure-report
 
       # Шаг 5: Выгрузка отчета
       - name: 5. Upload Allure Report artifact
