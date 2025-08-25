@@ -1,16 +1,16 @@
-name: Run Autotests and Publish Report with History
+name: Run Autotests and Publish Report
 
 on:
   push:
     branches: [ main, master ]
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read # Чтение репозитория
+  pages: write    # Запись на GitHub Pages
+  id-token: write # Права для аутентификации
 
 jobs:
-  # ЗАДАНИЕ 1: Запуск тестов и подготовка отчета
+  # ЗАДАНИЕ 1: Запуск тестов и создание отчета
   build:
     runs-on: ubuntu-latest
     steps:
@@ -23,43 +23,43 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
 
       - name: 3. Run API and UI tests
+        # Мы не используем continue-on-error, чтобы job падал, если тесты падают
         run: docker-compose run --rm tests
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
-      - name: 4. Generate Allure Report with history
+      - name: 4. Generate Allure Report
+        # Используем простой и надежный action для генерации
         uses: simple-elf/allure-report-action@v1.7
         if: always()
-        id: allure-report
         with:
           allure_results: allure-results
-          gh_pages: gh-pages
+          # Готовый отчет будет в папке allure-history
           allure_history: allure-history
 
-      - name: 5. Upload report artifact for deployment
-        uses: actions/upload-artifact@v4
+      # Шаг 5: Подготовка артефакта СПЕЦИАЛЬНО для GitHub Pages
+      - name: 5. Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
         if: always()
         with:
-          name: allure-report
-          path: allure-history # Загружаем папку, которую подготовил simple-elf
-          retention-days: 1
+          # Указываем папку с нашим сгенерированным отчетом
+          path: ./allure-history
 
-  # ЗАДАНИЕ 2: Публикация отчета на GitHub Pages
+  # ЗАДАНИЕ 2: Публикация на GitHub Pages
   deploy:
-    if: always()
     needs: build # Запускается после build
+    # Даем права на деплой
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # Устанавливаем URL для окружения
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Download report artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: allure-report
-
-      - name: 2. Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          keep_files: true # Сохраняем историю
+      - name: Deploy to GitHub Pages
+        id: deployment
+        # Используем ОФИЦИАЛЬНЫЙ action для деплоя
+        uses: actions/deploy-pages@v4
