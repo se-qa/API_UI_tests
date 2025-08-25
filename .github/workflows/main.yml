@@ -61,7 +61,7 @@ jobs:
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          pytest -m ${{ matrix.test-group }} --allured-results
+          pytest -m ${{ matrix.test-group }} --alluredir=allure-results
           --reruns 2
           --reruns-delay 5
       - name: 3. Upload results for ${{ matrix.test-group }}
