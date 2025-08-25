@@ -1,0 +1,1 @@
+{'firstname': 'Super', 'lastname': 'Tester', 'totalprice': 2000, 'depositpaid': False, 'bookingdates': {'checkin': '2025-10-01', 'checkout': '2025-10-20'}, 'additionalneeds': 'Espresso Machine'}

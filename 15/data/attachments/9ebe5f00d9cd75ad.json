@@ -1,0 +1,11 @@
+{
+    "firstname": "James",
+    "lastname": "Tester",
+    "totalprice": 700,
+    "depositpaid": true,
+    "bookingdates": {
+        "checkin": "2025-09-01",
+        "checkout": "2025-09-10"
+    },
+    "additionalneeds": "Allure Report"
+}
