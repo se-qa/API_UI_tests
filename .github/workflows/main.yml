@@ -5,7 +5,7 @@ on:
     branches: [ main, master ]
 
 permissions:
-  contents: write # Права нужны для peaceiris/actions-gh-pages
+  contents: write
   pages: write
   id-token: write
   packages: write
@@ -28,70 +28,55 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 4. Define image name and tag in lowercase
-        # ИСПРАВЛЕНО: Приводим имя репозитория к нижнему регистру
-        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name_all_lowercase }}:latest" >> $GITHUB_ENV
-        env:
-          # Эта переменная доступна в GitHub Actions для таких случаев
-          name_all_lowercase: ${{ github.repository_owner }}/${{ github.event.repository.name }}
-
-      - name: 5. Build and push image with caching
+      - name: 4. Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_NAME }}
+          # ИСПРАВЛЕНО: Используем самый простой и надежный способ
+          # `${{ github.repository }}` дает "se-qa/API_UI_tests"
+          # Оператор `${{ ...,,}}` приводит все к нижнему регистру.
+          tags: ghcr.io/${{ github.repository,, }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ЗАДАНИЕ 2 и 3 остаются БЕЗ ИЗМЕНЕНИЙ, но будут использовать правильное имя образа
+  # ЗАДАНИЕ 2: Запуск API-тестов
   run-api-tests:
     needs: build-and-push-docker
     runs-on: ubuntu-latest
     steps:
       - name: 1. Get code from repository
         uses: actions/checkout@v4
-      - name: 2. Define image name in lowercase
-        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name_all_lowercase }}:latest" >> $GITHUB_ENV
-        env:
-          name_all_lowercase: ${{ github.repository_owner }}/${{ github.event.repository.name }}
-      - name: 3. Pull the tested image
-        run: docker pull ${{ env.IMAGE_NAME }}
-      - name: 4. Run API tests
+      - name: 2. Pull the tested image and run API tests
         run: >
           docker run --rm
           -v $(pwd)/allure-results-api:/app/allure-results
           -e BASE_URL=${{ secrets.BASE_URL }}
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
-          ${{ env.IMAGE_NAME }}
-          pytest -m api --alluredir=allure-results
-      - name: 5. Upload API results
+          ghcr.io/${{ github.repository,, }}:latest
+          pytest -m api --allure-dir=allure-results
+      - name: 3. Upload API results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: allure-results-api
           path: allure-results-api
 
+  # ЗАДАНИЕ 3: Запуск UI-тестов
   run-ui-tests:
     needs: build-and-push-docker
     runs-on: ubuntu-latest
     steps:
       - name: 1. Get code from repository
         uses: actions/checkout@v4
-      - name: 2. Define image name in lowercase
-        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name_all_lowercase }}:latest" >> $GITHUB_ENV
-        env:
-          name_all_lowercase: ${{ github.repository_owner }}/${{ github.event.repository.name }}
-      - name: 3. Pull the tested image
-        run: docker pull ${{ env.IMAGE_NAME }}
-      - name: 4. Run UI tests
+      - name: 2. Pull the tested image and run UI tests
         run: >
           docker run --rm --ipc=host --init
           -v $(pwd)/allure-results-ui:/app/allure-results
-          ${{ env.IMAGE_NAME }}
-          pytest -m ui --alluredir=allure-results
-      - name: 5. Upload UI results
+          ghcr.io/${{ github.repository,, }}:latest
+          pytest -m ui --allure-dir=allure-results
+      - name: 3. Upload UI results
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -122,6 +107,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: allure-history
           keep_files: true
-          # ИСПРАВЛЕНО: Добавляем Git-пользователя
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
