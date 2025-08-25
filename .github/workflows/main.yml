@@ -20,7 +20,7 @@ jobs:
     steps:
       # Шаг 1: Клонирование вашего репозитория на виртуальную машину
       - name: 1. Get code from repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Шаг 2: Запуск всех тестов с помощью Docker Compose
       # Эта команда выполнит сервис 'tests' из вашего docker-compose.yml.
@@ -40,7 +40,7 @@ jobs:
       # Этот шаг берет созданную папку allure-report и прикрепляет ее
       # к результатам сборки в виде zip-архива.
       - name: 4. Upload Allure Report artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         # 'if: always()' — очень важная строка! Она означает, что этот шаг выполнится
         # всегда, даже если предыдущие шаги (тесты) упали.
         # Это позволяет нам скачать отчет и посмотреть, что именно сломалось.
