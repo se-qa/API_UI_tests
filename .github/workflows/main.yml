@@ -5,13 +5,13 @@ on:
     branches: [ main, master ]
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
-  packages: write # Добавляем права для ghcr.io
+  packages: write
 
 jobs:
-  # ЗАДАНИЕ 1: Сборка и публикация Docker-образа с кэшированием
+  # ЗАДАНИЕ 1: Сборка и ПУБЛИКАЦИЯ Docker-образа
   build:
     runs-on: ubuntu-latest
     steps:
@@ -28,6 +28,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # ИСПРАВЛЕНО: Создаем переменную с именем в нижнем регистре
       - name: 4. Create lower-case image name
         run: echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
@@ -40,55 +41,62 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ЗАДАНИЕ 2: Запуск тестов (параллельно) и генерация отчета
-  test-and-report:
+  # ЗАДАНИЕ 2: Запуск тестов (параллельно)
+  run-tests:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test-group: [api, ui]
     steps:
-      - name: 1. Get code from repository
-        uses: actions/checkout@v4
-
-      - name: 2. Create lower-case image name
+      - name: 1. Create lower-case image name
         run: echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-      # Запускаем API и UI тесты в фоновом режиме, чтобы они шли параллельно
-      - name: 3. Run API tests
+      - name: 2. Run tests for ${{ matrix.test-group }}
         run: >
-          docker run
-          -v $(pwd)/allure-results:/app/allure-results
+          docker run --rm --ipc=host --init
+          -v $(pwd)/allure-results-${{ matrix.test-group }}:/app/allure-results
           -e BASE_URL=${{ secrets.BASE_URL }}
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           ${{ env.IMAGE_NAME }}:latest
-          pytest -m api --alluredir=allure-results &
+          pytest -m ${{ matrix.test-group }} --alluredir=allure-results
 
-      - name: 4. Run UI tests
-        run: >
-          docker run --ipc=host --init
-          -v $(pwd)/allure-results:/app/allure-results
-          ${{ env.IMAGE_NAME }}:latest
-          pytest -m ui --alluredir=allure-results &
-
-      # Ждем завершения всех фоновых процессов (тестов)
-      - name: 5. Wait for all tests to complete
-        run: wait
-
-      - name: 6. Generate Allure Report
-        uses: simple-elf/allure-report-action@v1.7
+      - name: 3. Upload results for ${{ matrix.test-group }}
+        uses: actions/upload-artifact@v4
         if: always()
         with:
+          name: allure-results-${{ matrix.test-group }}
+          path: allure-results-${{ matrix.test-group }}
+
+  # ЗАДАНИЕ 3: Публикация отчета
+  publish-report:
+    needs: run-tests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          path: allure-results
+          merge-multiple: true
+
+      - name: 2. Generate Allure Report
+        uses: simple-elf/allure-report-action@v1.7
+        with:
           allure_results: allure-results
+          gh_pages: gh-pages
           allure_history: allure-history
 
-      - name: 7. Upload artifact for GitHub Pages
+      - name: 3. Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
-        if: always()
         with:
           path: ./allure-history
 
-  # ЗАДАНИЕ 3: Публикация на GitHub Pages
+  # ЗАДАНИЕ 4: Деплой на GitHub Pages
   deploy:
-    needs: test-and-report
+    needs: publish-report
     if: always()
     runs-on: ubuntu-latest
     permissions:
