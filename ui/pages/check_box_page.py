@@ -87,6 +87,6 @@ class CheckBoxPage(BasePage):
         )
 
         # Выполняем саму проверку
-        assert checked_count == unchecked_count and unchecked_count == checked_count, \
+        assert checked_count == unchecked_count and unchecked_count != checked_count, \
             f"Количество не совпадает! Отмечено: {checked_count}, Не отмечено: {unchecked_count}"
 
