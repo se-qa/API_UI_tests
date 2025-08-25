@@ -19,14 +19,15 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
-      # Шаг 3: Запуск тестов
-      # Теперь эта команда точно сработает
       - name: 3. Run API and UI tests
+        # Передаем секреты в docker-compose
         run: docker-compose run --rm tests
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
       - name: 4. Generate static Allure report
-        # Запускаем сервис 'allure', но ПЕРЕОПРЕДЕЛЯЕМ его команду
-        # с 'serve' (которая запускает сервер) на 'generate' (которая создает файлы).
         run: docker-compose run --rm allure allure generate allure-results --clean -o allure-report
 
       - name: 5. Upload Allure Report artifact

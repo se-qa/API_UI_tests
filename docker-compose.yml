@@ -6,6 +6,10 @@ services:
     init: true
     volumes:
       - ./allure-results:/app/allure-results
+    environment:
+      - BASE_URL=${BASE_URL}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     command: pytest -m "api or ui" --alluredir=allure-results
 
   # Сервис для ПРОСМОТРА ОТЧЕТА
@@ -17,7 +21,7 @@ services:
       # Этот volume читает результаты
       - ./allure-results:/app/allure-results
       # ЭТОТ VOLUME СОХРАНЯЕТ ГОТОВЫЙ ОТЧЕТ НА ХОСТ
-      - ./allure-report:/app/allure-report 
+      - ./allure-report:/app/allure-report
     ports:
       - "5050:5050"
     command: allure serve -h 0.0.0.0 -p 5050 allure-results
