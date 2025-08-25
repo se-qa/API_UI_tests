@@ -1,15 +1,19 @@
-name: Run Autotests and Generate Report
+name: Run Autotests and Publish Report
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    branches: [ main, master ] # Запускаем только при пуше в основные ветки
+  # pull_request: # Можно убрать PR, чтобы не публиковать отчет для каждого коммита в PR
+
+# Добавляем права для деплоя на GitHub Pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-
     steps:
       - name: 1. Get code from repository
         uses: actions/checkout@v4
@@ -20,24 +24,33 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
 
       - name: 3. Run API and UI tests
-        # Убираем 'continue-on-error'. Теперь, если тесты упадут, этот шаг будет КРАСНЫМ.
+        # Этот шаг должен оставаться таким же, чтобы пайплайн падал при ошибках
         run: docker-compose run --rm tests
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
-      # Шаг 4: Генерация отчета (БУДЕТ ВЫПОЛНЕН ВСЕГДА)
-      - name: 4. Generate static Allure report
-        # 'if: always()' гарантирует, что этот шаг запустится, даже если Шаг 3 упал.
+      # Шаг 4: Генерация Allure-отчета (теперь это делает специальный action)
+      - name: 4. Generate Allure Report
+        uses: allure-framework/allure-action@v2
+        # 'if: always()' гарантирует, что отчет будет сгенерирован всегда
         if: always()
-        run: docker-compose run --rm allure allure generate allure-results --clean -o allure-report
-
-      # Шаг 5: Выгрузка отчета (БУДЕТ ВЫПОЛНЕН ВСЕГДА)
-      - name: 5. Upload Allure Report artifact
-        # 'if: always()' здесь был и раньше, и он абсолютно на своем месте.
-        if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: allure-report
-          path: allure-report
+          # Указываем, где лежат "сырые" результаты
+          results_path: allure-results
+          # Указываем, куда положить сгенерированный HTML-отчет
+          report_path: allure-report
+
+      # Шаг 5: Публикация отчета на GitHub Pages
+      - name: 5. Deploy Allure Report to GitHub Pages
+        # Этот шаг тоже выполняется всегда
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          # GitHub автоматически предоставит токен для публикации
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Указываем папку, которую нужно опубликовать
+          publish_dir: ./allure-report
+          # Опционально: можно добавить коммит-сообщение
+          commit_message: "Deploy Allure report"
