@@ -48,6 +48,7 @@ jobs:
 
   # ЗАДАНИЕ 2: Публикация отчета на GitHub Pages
   deploy:
+    if: always()
     needs: build # Запускается после build
     runs-on: ubuntu-latest
     steps:
