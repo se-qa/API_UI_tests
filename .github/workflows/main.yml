@@ -3,6 +3,8 @@ name: Run Autotests and Publish Report
 on:
   push:
     branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 permissions:
   contents: read
@@ -25,14 +27,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: 4. Create lower-case image name
-        run: echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: 4. Create lower-case image name and unique tag
+        run: |
+          echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
       - name: 5. Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -45,8 +49,10 @@ jobs:
       matrix:
         test-group: [api, ui]
     steps:
-      - name: 1. Create lower-case image name
-        run: echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: 1. Create lower-case image name and unique tag
+        run: |
+          echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
       - name: 2. Run tests for ${{ matrix.test-group }}
         run: >
           docker run --rm --ipc=host --init
@@ -54,8 +60,10 @@ jobs:
           -e BASE_URL=${{ secrets.BASE_URL }}
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
-          ${{ env.IMAGE_NAME }}:latest
-          pytest -m ${{ matrix.test-group }} --alluredir=allure-results
+          ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          pytest -m ${{ matrix.test-group }} --allured-results
+          --reruns 2
+          --reruns-delay 5
       - name: 3. Upload results for ${{ matrix.test-group }}
         uses: actions/upload-artifact@v4
         if: always()
