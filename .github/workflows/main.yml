@@ -49,6 +49,7 @@ jobs:
 
   # ЗАДАНИЕ 2: Публикация на GitHub Pages
   deploy:
+    if: always()
     needs: build # Запускается после build
     # Даем права на деплой
     permissions:
