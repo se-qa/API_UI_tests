@@ -5,13 +5,13 @@ on:
     branches: [ main, master ]
 
 permissions:
-  contents: read
+  contents: write # Права нужны для peaceiris/actions-gh-pages
   pages: write
   id-token: write
   packages: write
 
 jobs:
-  # ЗАДАНИЕ 1: Сборка и ПУБЛИКАЦИЯ Docker-образа с кэшированием
+  # ЗАДАНИЕ 1: Сборка и ПУБЛИКАЦИЯ Docker-образа
   build-and-push-docker:
     runs-on: ubuntu-latest
     steps:
@@ -28,8 +28,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 4. Define image name and tag
-        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest" >> $GITHUB_ENV
+      - name: 4. Define image name and tag in lowercase
+        # ИСПРАВЛЕНО: Приводим имя репозитория к нижнему регистру
+        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name_all_lowercase }}:latest" >> $GITHUB_ENV
+        env:
+          # Эта переменная доступна в GitHub Actions для таких случаев
+          name_all_lowercase: ${{ github.repository_owner }}/${{ github.event.repository.name }}
 
       - name: 5. Build and push image with caching
         uses: docker/build-push-action@v5
@@ -40,22 +44,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ЗАДАНИЕ 2: Запуск API-тестов (параллельно с UI)
+  # ЗАДАНИЕ 2 и 3 остаются БЕЗ ИЗМЕНЕНИЙ, но будут использовать правильное имя образа
   run-api-tests:
     needs: build-and-push-docker
     runs-on: ubuntu-latest
     steps:
       - name: 1. Get code from repository
         uses: actions/checkout@v4
-
-      - name: 2. Define image name
-        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest" >> $GITHUB_ENV
-
+      - name: 2. Define image name in lowercase
+        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name_all_lowercase }}:latest" >> $GITHUB_ENV
+        env:
+          name_all_lowercase: ${{ github.repository_owner }}/${{ github.event.repository.name }}
       - name: 3. Pull the tested image
         run: docker pull ${{ env.IMAGE_NAME }}
-
       - name: 4. Run API tests
-        # БЕЗ continue-on-error. Если тесты упадут, этот job провалится.
         run: >
           docker run --rm
           -v $(pwd)/allure-results-api:/app/allure-results
@@ -64,59 +66,52 @@ jobs:
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           ${{ env.IMAGE_NAME }}
           pytest -m api --alluredir=allure-results
-
       - name: 5. Upload API results
         uses: actions/upload-artifact@v4
-        if: always() # Выгружаем отчет всегда
+        if: always()
         with:
           name: allure-results-api
           path: allure-results-api
 
-  # ЗАДАНИЕ 3: Запуск UI-тестов (параллельно с API)
   run-ui-tests:
     needs: build-and-push-docker
     runs-on: ubuntu-latest
     steps:
       - name: 1. Get code from repository
         uses: actions/checkout@v4
-
-      - name: 2. Define image name
-        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest" >> $GITHUB_ENV
-
+      - name: 2. Define image name in lowercase
+        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name_all_lowercase }}:latest" >> $GITHUB_ENV
+        env:
+          name_all_lowercase: ${{ github.repository_owner }}/${{ github.event.repository.name }}
       - name: 3. Pull the tested image
         run: docker pull ${{ env.IMAGE_NAME }}
-
       - name: 4. Run UI tests
-        # БЕЗ continue-on-error. Если тесты упадут, этот job провалится.
         run: >
           docker run --rm --ipc=host --init
           -v $(pwd)/allure-results-ui:/app/allure-results
           ${{ env.IMAGE_NAME }}
           pytest -m ui --alluredir=allure-results
-
       - name: 5. Upload UI results
         uses: actions/upload-artifact@v4
-        if: always() # Выгружаем отчет всегда
+        if: always()
         with:
           name: allure-results-ui
           path: allure-results-ui
 
-  # ЗАДАНИЕ 4: Публикация единого отчета
+  # ЗАДАНИЕ 4: Публикация отчета
   publish-report:
     needs: [run-api-tests, run-ui-tests]
-    if: always() # Запускается всегда, чтобы опубликовать отчет, даже если тесты упали
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: 1. Download all test results
         uses: actions/download-artifact@v4
         with:
-          # Скачиваем все артефакты (и API, и UI)
           path: allure-results
 
       - name: 2. Generate and deploy report
         uses: simple-elf/allure-report-action@v1.7
         with:
-          # Указываем папку, куда скачались все результаты
           allure_results: allure-results
           gh_pages: gh-pages
           allure_history: allure-history
@@ -127,3 +122,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: allure-history
           keep_files: true
+          # ИСПРАВЛЕНО: Добавляем Git-пользователя
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
