@@ -1,11 +1,9 @@
-name: Run Autotests and Publish Report
+name: Run Autotests and Publish Report with History
 
 on:
   push:
-    branches: [ main, master ] # Запускаем только при пуше в основные ветки
-  # pull_request: # Можно убрать PR, чтобы не публиковать отчет для каждого коммита в PR
+    branches: [ main, master ]
 
-# Добавляем права для деплоя на GitHub Pages
 permissions:
   contents: write
   pages: write
@@ -24,33 +22,34 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
 
       - name: 3. Run API and UI tests
-        # Этот шаг должен оставаться таким же, чтобы пайплайн падал при ошибках
+        # Этот шаг остается без изменений
         run: docker-compose run --rm tests
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
-      # Шаг 4: Генерация Allure-отчета (теперь это делает специальный action)
-      - name: 4. Generate Allure Report
-        uses: allure-framework/allure-action@v2
-        # 'if: always()' гарантирует, что отчет будет сгенерирован всегда
+      # Шаг 4: Генерация Allure-отчета с историей
+      - name: 4. Generate Allure Report with history
+        # Используем новый, продвинутый action
+        uses: simple-elf/allure-report-action@v1.7
         if: always()
+        id: allure-report # Даем ID, чтобы ссылаться на результат
         with:
           # Указываем, где лежат "сырые" результаты
-          results_path: allure-results
-          # Указываем, куда положить сгенерированный HTML-отчет
-          report_path: allure-report
+          allure_results: allure-results
+          # Указываем, где будет временная папка с историей
+          gh_pages: gh-pages
+          # Указываем, где будет готовый отчет для публикации
+          allure_history: allure-history
 
       # Шаг 5: Публикация отчета на GitHub Pages
       - name: 5. Deploy Allure Report to GitHub Pages
-        # Этот шаг тоже выполняется всегда
         if: always()
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          # GitHub автоматически предоставит токен для публикации
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Указываем папку, которую нужно опубликовать
-          publish_dir: ./allure-report
-          # Опционально: можно добавить коммит-сообщение
-          commit_message: "Deploy Allure report"
+          # Публикуем папку, которую подготовил предыдущий action
+          publish_dir: allure-history
+          # Указываем, что нужно держать историю коммитов в ветке gh-pages
+          keep_files: true
