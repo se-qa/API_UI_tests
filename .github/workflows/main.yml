@@ -1,16 +1,18 @@
-name: Run Autotests and Publish Report with History
+name: Run Autotests and Publish Report
 
 on:
   push:
     branches: [ main, master ]
 
+# Права доступа остаются теми же
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 jobs:
-  run-tests:
+  # ЗАДАНИЕ 1: Запуск тестов и генерация отчета
+  run-and-generate-report:
     runs-on: ubuntu-latest
     steps:
       - name: 1. Get code from repository
@@ -22,34 +24,46 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
 
       - name: 3. Run API and UI tests
-        # Этот шаг остается без изменений
         run: docker-compose run --rm tests
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
-      # Шаг 4: Генерация Allure-отчета с историей
-      - name: 4. Generate Allure Report with history
-        # Используем новый, продвинутый action
-        uses: simple-elf/allure-report-action@v1.7
+      - name: 4. Generate Allure Report
+        # Используем официальный action, он проще и надежнее для этой задачи
+        uses: allure-framework/allure-action@v3
         if: always()
-        id: allure-report # Даем ID, чтобы ссылаться на результат
         with:
-          # Указываем, где лежат "сырые" результаты
-          allure_results: allure-results
-          # Указываем, где будет временная папка с историей
-          gh_pages: gh-pages
-          # Указываем, где будет готовый отчет для публикации
-          allure_history: allure-history
+          results_path: allure-results
+          report_path: allure-report
 
-      # Шаг 5: Публикация отчета на GitHub Pages
-      - name: 5. Deploy Allure Report to GitHub Pages
+      # Шаг 5: Выгрузка отчета как артефакта, который будет доступен следующему заданию
+      - name: 5. Upload report artifact
+        uses: actions/upload-artifact@v4
         if: always()
+        with:
+          name: allure-report
+          path: allure-report
+          retention-days: 1 # Хранить артефакт всего 1 день
+
+  # ЗАДАНИЕ 2: Публикация отчета на GitHub Pages
+  deploy-report:
+    # Это задание зависит от успешного завершения предыдущего
+    needs: run-and-generate-report
+    runs-on: ubuntu-latest
+    steps:
+      # Шаг 1: Скачиваем артефакт, созданный в предыдущем задании
+      - name: 1. Download report artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-report
+
+      # Шаг 2: Публикуем содержимое артефакта на GitHub Pages
+      - name: 2. Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Публикуем папку, которую подготовил предыдущий action
-          publish_dir: allure-history
-          # Указываем, что нужно держать историю коммитов в ветке gh-pages
-          keep_files: true
+          # Папка для публикации - это содержимое скачанного артефакта
+          publish_dir: .
+          # keep_files не нужен, так как мы каждый раз публикуем полный отчет
