@@ -1,0 +1,14 @@
+{
+    "bookingid": 1866,
+    "booking": {
+        "firstname": "Automation",
+        "lastname": "Tester",
+        "totalprice": null,
+        "depositpaid": true,
+        "bookingdates": {
+            "checkin": "2025-09-01",
+            "checkout": "2025-09-10"
+        },
+        "additionalneeds": "Allure Report"
+    }
+}

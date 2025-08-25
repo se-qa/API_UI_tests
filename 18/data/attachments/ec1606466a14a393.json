@@ -1,0 +1,14 @@
+{
+    "bookingid": 1880,
+    "booking": {
+        "firstname": "Automation",
+        "lastname": "Tester",
+        "totalprice": 1000,
+        "depositpaid": true,
+        "bookingdates": {
+            "checkin": "2025-09-01",
+            "checkout": "2025-09-10"
+        },
+        "additionalneeds": "Allure Report"
+    }
+}
