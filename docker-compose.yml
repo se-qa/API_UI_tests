@@ -1,0 +1,38 @@
+# version: '3.8' # Этот атрибут действительно устарел, убираем его
+
+services:
+  # Сервис для ЗАПУСКА ТЕСТОВ
+  tests:
+    build: .
+    ipc: host
+    init: true
+    # Монтируем папку с результатами, чтобы они СОХРАНИЛИСЬ на хосте
+    volumes:
+      - ./allure-results:/app/allure-results
+    # Явно указываем команду для этого сервиса
+    command:
+      - "pytest"
+      - "-m"
+      - "ui" # или "api", или "smoke"
+      - "--alluredir=allure-results"
+
+  # Сервис для ПРОСМОТРА ОТЧЕТА
+  allure:
+    build: .
+    ipc: host
+    init: true
+    # Монтируем ту же папку, чтобы allure мог ее ПРОЧИТАТЬ
+    volumes:
+      - ./allure-results:/app/allure-results
+    # Открываем порт для доступа из браузера
+    ports:
+      - "5050:5050"
+    # Явно указываем команду для этого сервиса
+    command:
+      - "allure"
+      - "serve"
+      - "-h"
+      - "0.0.0.0"
+      - "-p"
+      - "5050"
+      - "allure-results"

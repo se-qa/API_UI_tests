@@ -6,7 +6,7 @@ from utils.allure_decorators import allure_annotations
     story="Форма Text Box",
     description="Этот тест заполняет все поля формы Text Box и проверяет корректность отображения данных.",
     severity=allure.severity_level.BLOCKER,
-    tag="UI"
+    tags=['UI', 'Smoke', 'Regression']
 )
 # Теперь мы запрашиваем фикстуру text_box_page напрямую
 def test_fill_text_box_form_positive(text_box_page) -> None:

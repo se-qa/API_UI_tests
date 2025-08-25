@@ -1,0 +1,50 @@
+# Имя нашего CI/CD пайплайна, будет отображаться в GitHub
+name: Run Autotests and Generate Report
+
+# Триггеры: когда запускать этот пайплайн.
+# В данном случае, при каждом 'push' в ветки 'main' или 'master',
+# а также при создании Pull Request'а в эти ветки.
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+# Задания (jobs), которые нужно выполнить
+jobs:
+  run-tests:
+    # Указываем, что задание будет выполняться на виртуальной машине с последней версией Ubuntu
+    runs-on: ubuntu-latest
+
+    # Шаги (steps), из которых состоит задание
+    steps:
+      # Шаг 1: Клонирование вашего репозитория на виртуальную машину
+      - name: 1. Get code from repository
+        uses: actions/checkout@v3
+
+      # Шаг 2: Запуск всех тестов с помощью Docker Compose
+      # Эта команда выполнит сервис 'tests' из вашего docker-compose.yml.
+      # Внутри него запустится pytest, который создаст папку allure-results
+      # на файловой системе виртуальной машины (благодаря volume mount).
+      - name: 2. Run API and UI tests
+        run: docker-compose run --rm tests
+
+      # Шаг 3: Генерация статического Allure-отчета
+      # Мы используем тот же самый подход, что и локально, но уже на машине GitHub.
+      # Запускаем контейнер с Allure, который читает allure-results и создает allure-report.
+      # $(pwd) здесь работает, так как раннеры GitHub Actions работают на Linux.
+      - name: 3. Generate Allure Report
+        run: docker run --rm -v $(pwd)/allure-results:/app/allure-results -v $(pwd)/allure-report:/app/allure-report allure/allure-commandline generate /app/allure-results --clean -o /app/allure-report
+
+      # Шаг 4: Архивирование и выгрузка отчета
+      # Этот шаг берет созданную папку allure-report и прикрепляет ее
+      # к результатам сборки в виде zip-архива.
+      - name: 4. Upload Allure Report artifact
+        uses: actions/upload-artifact@v3
+        # 'if: always()' — очень важная строка! Она означает, что этот шаг выполнится
+        # всегда, даже если предыдущие шаги (тесты) упали.
+        # Это позволяет нам скачать отчет и посмотреть, что именно сломалось.
+        if: always()
+        with:
+          name: allure-report
+          path: allure-report

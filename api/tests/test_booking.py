@@ -12,7 +12,7 @@ from utils.allure_decorators import allure_annotations
     story="Создание бронирования",
     description="Проверка создания бронирования с полным набором валидных данных.",
     severity=allure.severity_level.BLOCKER,
-    tag="Positive"
+    tags=['API', 'Smoke', 'Regression']
 )
 def test_create_booking_positive(booking_endpoint) -> None:
     booking_endpoint.create_booking(booking_payloads.VALID_BOOKING)
@@ -25,7 +25,7 @@ def test_create_booking_positive(booking_endpoint) -> None:
     story="Создание бронирования",
     description="Проверка, что система возвращает ошибку при отправке некорректных данных.",
     severity=allure.severity_level.CRITICAL,
-    tag="Negative"
+    tags=['API', 'Smoke', 'Regression']
 )
 @pytest.mark.parametrize(
     "payload, expected_status_code, test_id",
@@ -42,7 +42,7 @@ def test_create_booking_negative(booking_endpoint, payload, expected_status_code
     story="Получение бронирования",
     description="Проверка эндпоинта получения списка всех бронирований.",
     severity=allure.severity_level.NORMAL,
-    tag="Positive"
+    tags=['API', 'Regression']
 )
 def test_get_all_bookings_positive(booking_endpoint, booking_id) -> None:
     booking_endpoint.get_all_bookings()
@@ -55,7 +55,7 @@ def test_get_all_bookings_positive(booking_endpoint, booking_id) -> None:
     story="Авторизация",
     description="Проверка, что система не позволяет изменять данные без авторизации.",
     severity=allure.severity_level.BLOCKER,
-    tag="Negative"
+    tags=['API', 'Smoke']
 )
 def test_update_booking_with_invalid_token_negative(booking_endpoint, booking_id) -> None:
     booking_endpoint.update_booking(booking_id, booking_payloads.UPDATE_BOOKING, "invalid_token_12345")
@@ -67,14 +67,14 @@ def test_update_booking_with_invalid_token_negative(booking_endpoint, booking_id
     story="Авторизация",
     description="Проверка, что система не позволяет изменять данные без авторизации.",
     severity=allure.severity_level.BLOCKER,
-    tag="Negative"
+    tags=['API', 'Regression']
 )
 @allure_annotations(
     title="Успешное частичное обновление бронирования",
     story="Обновление бронирования",
     description="Проверка частичного обновления данных ранее созданного бронирования.",
     severity=allure.severity_level.CRITICAL,
-    tag="Positive"
+    tags=['API', 'Regression']
 )
 def test_partial_update_booking_positive(booking_endpoint, booking_id, auth_token) -> None:
     # Действие 1: Частично обновляем бронирование
@@ -97,7 +97,7 @@ def test_partial_update_booking_positive(booking_endpoint, booking_id, auth_toke
     story="Авторизация",
     description="Проверка, что система не позволяет частично изменять данные без авторизации.",
     severity=allure.severity_level.BLOCKER,
-    tag="Negative"
+    tags=['API', 'Regression']
 )
 def test_partial_update_booking_invalid_token_negative(booking_endpoint, booking_id) -> None:
     booking_endpoint.partial_update_booking(
@@ -113,7 +113,7 @@ def test_partial_update_booking_invalid_token_negative(booking_endpoint, booking
     story="Обновление бронирования",
     description="Проверка ответа системы при попытке обновить несуществующий ресурс.",
     severity=allure.severity_level.NORMAL,
-    tag="Negative"
+    tags=['API', 'Regression']
 )
 def test_partial_update_non_existent_booking_negative(booking_endpoint, auth_token) -> None:
     booking_endpoint.partial_update_booking(
@@ -129,7 +129,7 @@ def test_partial_update_non_existent_booking_negative(booking_endpoint, auth_tok
     story="Обновление бронирования",
     description="Проверка, что система возвращает ошибку при отправке некорректных данных.",
     severity=allure.severity_level.CRITICAL,
-    tag="Negative"
+    tags=['API', 'Regression']
 )
 @pytest.mark.parametrize(
     "payload, expected_status_code, test_id",

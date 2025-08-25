@@ -7,7 +7,7 @@ from utils.allure_decorators import allure_annotations
     story="Форма Check Box",
     description="Этот тест раскрывает дерево, выбирает несколько чекбоксов и проверяет результат.",
     severity=allure.severity_level.CRITICAL,
-    tag="UI"
+    tags=['UI', 'Regression']
 )
 def test_select_checkboxes_positive(check_box_page) -> None:
     # Действия
@@ -23,11 +23,11 @@ def test_select_checkboxes_positive(check_box_page) -> None:
     check_box_page.check_result_not_contains_text_("documents")
 
 @allure_annotations(
-    title="Успешный выбор чекбоксов в древовидной структуре",
+    title="Успешный выбор всех чекбоксов в древовидной структуре",
     story="Форма Check Box",
     description="Этот тест раскрывает дерево, выбирает несколько чекбоксов и проверяет результат.",
     severity=allure.severity_level.CRITICAL,
-    tag="UI"
+    tags=['UI']
 )
 def test_select_all_checkboxes_positive(check_box_page) -> None:
     # Действия

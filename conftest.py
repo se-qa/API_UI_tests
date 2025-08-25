@@ -16,16 +16,24 @@ from utils.config import ADMIN_USERNAME, ADMIN_PASSWORD
 @pytest.fixture(scope="function")
 def page():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=True)
         new_page = browser.new_page()
         yield new_page
         browser.close()
 
 
 def pytest_exception_interact(node, call, report):
-    if "page" in node.funcargs:
+    """
+    Этот хук делает скриншот страницы в случае падения UI-теста и прикрепляет его к Allure-отчету.
+    """
+    # --- НОВАЯ, БОЛЕЕ НАДЕЖНАЯ ПРОВЕРКА ---
+    # 1. Проверяем, есть ли у 'node' вообще атрибут 'funcargs' (т.е. является ли он функцией).
+    # 2. И только потом проверяем, есть ли в этом словаре фикстура 'page'.
+    if hasattr(node, "funcargs") and "page" in node.funcargs:
         page = node.funcargs["page"]
+        # Делаем скриншот
         screenshot_bytes = page.screenshot()
+        # Прикрепляем скриншот к отчету Allure
         allure.attach(
             screenshot_bytes,
             name=f"screenshot_on_failure_{node.name}",
