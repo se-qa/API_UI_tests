@@ -19,10 +19,10 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
-      - name: 3. Run all tests
-        # Запускаем сервис 'tests' для выполнения pytest.
-        # Можно изменить маркер, если в CI нужно запускать не все тесты.
-        run: docker-compose run --rm tests -m "api or ui"
+      # Шаг 3: Запуск тестов
+      # Теперь эта команда точно сработает
+      - name: 3. Run API and UI tests
+        run: docker-compose run --rm tests
 
       - name: 4. Generate static Allure report
         # Запускаем сервис 'allure', но ПЕРЕОПРЕДЕЛЯЕМ его команду

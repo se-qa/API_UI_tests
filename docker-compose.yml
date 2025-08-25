@@ -10,7 +10,11 @@ services:
     volumes:
       - ./allure-results:/app/allure-results
     # Явно указываем команду для этого сервиса
-    command: pytest -m "api or ui" --alluredir=allure-results
+    command:
+      - "pytest"
+      - "-m"
+      - "ui" # или "api", или "smoke"
+      - "--alluredir=allure-results"
 
   # Сервис для ПРОСМОТРА ОТЧЕТА
   allure:
@@ -24,4 +28,11 @@ services:
     ports:
       - "5050:5050"
     # Явно указываем команду для этого сервиса
-    command: allure serve -h 0.0.0.0 -p 5050 allure-results
+    command:
+      - "allure"
+      - "serve"
+      - "-h"
+      - "0.0.0.0"
+      - "-p"
+      - "5050"
+      - "allure-results"
