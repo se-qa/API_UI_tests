@@ -1,18 +1,17 @@
-name: Run Autotests and Publish Report
+name: Run Autotests and Publish Report with History
 
 on:
   push:
     branches: [ main, master ]
 
-# Права доступа остаются теми же
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 jobs:
-  # ЗАДАНИЕ 1: Запуск тестов и генерация отчета
-  run-and-generate-report:
+  # ЗАДАНИЕ 1: Запуск тестов и подготовка отчета
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: 1. Get code from repository
@@ -30,40 +29,36 @@ jobs:
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
-      - name: 4. Generate Allure Report
-        # Используем официальный action, он проще и надежнее для этой задачи
-        uses: allure-framework/allure-action@v3
+      - name: 4. Generate Allure Report with history
+        uses: simple-elf/allure-report-action@v1.7
         if: always()
+        id: allure-report
         with:
-          results_path: allure-results
-          report_path: allure-report
+          allure_results: allure-results
+          gh_pages: gh-pages
+          allure_history: allure-history
 
-      # Шаг 5: Выгрузка отчета как артефакта, который будет доступен следующему заданию
-      - name: 5. Upload report artifact
+      - name: 5. Upload report artifact for deployment
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: allure-report
-          path: allure-report
-          retention-days: 1 # Хранить артефакт всего 1 день
+          path: allure-history # Загружаем папку, которую подготовил simple-elf
+          retention-days: 1
 
   # ЗАДАНИЕ 2: Публикация отчета на GitHub Pages
-  deploy-report:
-    # Это задание зависит от успешного завершения предыдущего
-    needs: run-and-generate-report
+  deploy:
+    needs: build # Запускается после build
     runs-on: ubuntu-latest
     steps:
-      # Шаг 1: Скачиваем артефакт, созданный в предыдущем задании
       - name: 1. Download report artifact
         uses: actions/download-artifact@v4
         with:
           name: allure-report
 
-      # Шаг 2: Публикуем содержимое артефакта на GitHub Pages
       - name: 2. Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Папка для публикации - это содержимое скачанного артефакта
           publish_dir: .
-          # keep_files не нужен, так как мы каждый раз публикуем полный отчет
+          keep_files: true # Сохраняем историю
