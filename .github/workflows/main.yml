@@ -88,7 +88,7 @@ jobs:
 
       - name: 3. Generate Allure Report
         # ИСПОЛЬЗУЕМ НАШ СОБСТВЕННЫЙ ОБРАЗ!
-        run: docker run --rm -v $(pwd)/allure-results:/app/allure-results -v $(pwd)/allure-report:/app/allure-report ${{ env.IMAGE_NAME }}:latest allure generate allure-results --clean -o allure-report
+        run: docker run --rm -v $(pwd)/allure-results:/app/allure-results -v $(pwd)/allure-report:/app/allure-report ${{ env.IMAGE_NAME }}:${{ github.sha }} allure generate allure-results --clean -o allure-report
 
       - name: 4. Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
