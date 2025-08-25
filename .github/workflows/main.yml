@@ -5,100 +5,62 @@ on:
     branches: [ main, master ]
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-  packages: write
+  contents: read # Чтение репозитория
+  pages: write    # Запись на GitHub Pages
+  id-token: write # Права для аутентификации
 
 jobs:
-  # ЗАДАНИЕ 1: Сборка образа (остается без изменений, оно работает)
+  # ЗАДАНИЕ 1: Запуск тестов и создание отчета
   build:
     runs-on: ubuntu-latest
     steps:
       - name: 1. Get code from repository
         uses: actions/checkout@v4
-      - name: 2. Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: 3. Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: 4. Create lower-case image name
-        run: echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-      - name: 5. Build and push image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
-  # ЗАДАНИЕ 2: Запуск тестов
-  run-tests:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        test-group: [api, ui]
-    steps:
-      - name: 1. Create lower-case image name
-        run: echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-      - name: 2. Run tests for ${{ matrix.test-group }}
-        run: >
-          docker run --rm --ipc=host --init
-          -v $(pwd)/allure-results-${{ matrix.test-group }}:/app/allure-results
-          -e BASE_URL=${{ secrets.BASE_URL }}
-          -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
-          -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
-          ${{ env.IMAGE_NAME }}:latest
-          pytest -m ${{ matrix.test-group }} --alluredir=allure-results
-      - name: 3. Upload results for ${{ matrix.test-group }}
-        uses: actions/upload-artifact@v4
+      - name: 2. Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+      - name: 3. Run API and UI tests
+        # Мы не используем continue-on-error, чтобы job падал, если тесты падают
+        run: docker-compose run --rm tests
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+
+      - name: 4. Generate Allure Report
+        # Используем простой и надежный action для генерации
+        uses: simple-elf/allure-report-action@v1.7
         if: always()
         with:
-          name: allure-results-${{ matrix.test-group }}
-          path: allure-results-${{ matrix.test-group }}
+          allure_results: allure-results
+          # Готовый отчет будет в папке allure-history
+          allure_history: allure-history
 
-  # ЗАДАНИЕ 3: Генерация отчета и подготовка к деплою
-  publish-report:
-    needs: run-tests
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: 1. Create lower-case image name
-        run: echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-      - name: 2. Download all test results
-        uses: actions/download-artifact@v4
-        with:
-          path: allure-results
-          merge-multiple: true
-
-      - name: 3. Generate Allure Report
-        # ИСПОЛЬЗУЕМ НАШ СОБСТВЕННЫЙ ОБРАЗ!
-        run: docker run --rm -v $(pwd)/allure-results:/app/allure-results -v $(pwd)/allure-report:/app/allure-report ${{ env.IMAGE_NAME }}:latest allure generate allure-results --clean -o allure-report
-
-      - name: 4. Upload artifact for GitHub Pages
+      # Шаг 5: Подготовка артефакта СПЕЦИАЛЬНО для GitHub Pages
+      - name: 5. Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
+        if: always()
         with:
-          path: ./allure-report # Указываем папку с готовым отчетом
+          # Указываем папку с нашим сгенерированным отчетом
+          path: ./allure-history
 
-  # ЗАДАНИЕ 4: Деплой на GitHub Pages
+  # ЗАДАНИЕ 2: Публикация на GitHub Pages
   deploy:
-    needs: publish-report
     if: always()
-    runs-on: ubuntu-latest
+    needs: build # Запускается после build
+    # Даем права на деплой
     permissions:
       pages: write
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }} # Устанавливаем URL для окружения
+    runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
+        # Используем ОФИЦИАЛЬНЫЙ action для деплоя
         uses: actions/deploy-pages@v4
