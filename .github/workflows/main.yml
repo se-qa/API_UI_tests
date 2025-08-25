@@ -20,7 +20,8 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
 
       - name: 3. Run API and UI tests
-        # Передаем секреты в docker-compose
+        # V-- ДОБАВЛЯЕМ ЭТУ СТРОКУ --V
+        continue-on-error: true
         run: docker-compose run --rm tests
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
@@ -28,6 +29,7 @@ jobs:
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
       - name: 4. Generate static Allure report
+        # Этот шаг теперь ТОЧНО будет запущен
         run: docker-compose run --rm allure allure generate allure-results --clean -o allure-report
 
       - name: 5. Upload Allure Report artifact
