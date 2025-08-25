@@ -28,15 +28,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 4. Build and push image
+      # ИСПРАВЛЕНО: Создаем переменную с именем в нижнем регистре
+      - name: 4. Create lower-case repository name variable
+        run: echo "IMAGE_REPO=${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
+
+      - name: 5. Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          # ИСПРАВЛЕНО: Используем самый простой и надежный способ
-          # `${{ github.repository }}` дает "se-qa/API_UI_tests"
-          # Оператор `${{ ...,,}}` приводит все к нижнему регистру.
-          tags: ghcr.io/${{ github.repository,, }}:latest
+          tags: ghcr.io/${{ env.IMAGE_REPO }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -47,16 +48,18 @@ jobs:
     steps:
       - name: 1. Get code from repository
         uses: actions/checkout@v4
-      - name: 2. Pull the tested image and run API tests
+      - name: 2. Create lower-case repository name variable
+        run: echo "IMAGE_REPO=${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
+      - name: 3. Pull the tested image and run API tests
         run: >
           docker run --rm
           -v $(pwd)/allure-results-api:/app/allure-results
           -e BASE_URL=${{ secrets.BASE_URL }}
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
-          ghcr.io/${{ github.repository,, }}:latest
-          pytest -m api --allure-dir=allure-results
-      - name: 3. Upload API results
+          ghcr.io/${{ env.IMAGE_REPO }}:latest
+          pytest -m api --alluredir=allure-results
+      - name: 4. Upload API results
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -70,13 +73,15 @@ jobs:
     steps:
       - name: 1. Get code from repository
         uses: actions/checkout@v4
-      - name: 2. Pull the tested image and run UI tests
+      - name: 2. Create lower-case repository name variable
+        run: echo "IMAGE_REPO=${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
+      - name: 3. Pull the tested image and run UI tests
         run: >
           docker run --rm --ipc=host --init
           -v $(pwd)/allure-results-ui:/app/allure-results
-          ghcr.io/${{ github.repository,, }}:latest
-          pytest -m ui --allure-dir=allure-results
-      - name: 3. Upload UI results
+          ghcr.io/${{ env.IMAGE_REPO }}:latest
+          pytest -m ui --alluredir=allure-results
+      - name: 4. Upload UI results
         uses: actions/upload-artifact@v4
         if: always()
         with:
