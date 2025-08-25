@@ -20,30 +20,24 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
 
       - name: 3. Run API and UI tests
-        # 'id' позволяет нам ссылаться на этот шаг позже
-        id: run_tests
-        continue-on-error: true
+        # Убираем 'continue-on-error'. Теперь, если тесты упадут, этот шаг будет КРАСНЫМ.
         run: docker-compose run --rm tests
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
+      # Шаг 4: Генерация отчета (БУДЕТ ВЫПОЛНЕН ВСЕГДА)
       - name: 4. Generate static Allure report
-        # Этот шаг запускается всегда, благодаря continue-on-error выше
+        # 'if: always()' гарантирует, что этот шаг запустится, даже если Шаг 3 упал.
+        if: always()
         run: docker-compose run --rm allure allure generate allure-results --clean -o allure-report
 
+      # Шаг 5: Выгрузка отчета (БУДЕТ ВЫПОЛНЕН ВСЕГДА)
       - name: 5. Upload Allure Report artifact
-        uses: actions/upload-artifact@v4
+        # 'if: always()' здесь был и раньше, и он абсолютно на своем месте.
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: allure-report
           path: allure-report
-
-      # V-- НОВЫЙ ФИНАЛЬНЫЙ ШАГ ПРОВЕРКИ --V
-      - name: 6. Check test run status
-        # Этот шаг выполняется, только если шаг с id='run_tests' завершился неудачно
-        if: steps.run_tests.outcome == 'failure'
-        run: |
-          echo "Тесты провалились. Проваливаем сборку."
-          exit 1
