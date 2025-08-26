@@ -16,7 +16,7 @@ from utils.config import ADMIN_USERNAME, ADMIN_PASSWORD
 @pytest.fixture(scope="function")
 def page():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=True)
         new_page = browser.new_page()
         yield new_page
         browser.close()
