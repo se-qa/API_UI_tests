@@ -1,6 +1,9 @@
 import allure
 import requests
 from typing import Optional
+
+from pydantic import ValidationError
+
 from utils.config import BASE_URL
 from api.endpoints.base_api import BaseApi
 from api.models.booking_model import Booking, BookingResponse
@@ -20,7 +23,7 @@ class BookingEndpoint(BaseApi):
             try:
                 self.validate_response_(BookingResponse)
                 return self.validated_response.bookingid
-            except Exception:
+            except ValidationError:
                 return None
         return None
 

@@ -12,7 +12,7 @@ class BaseApi:
     def check_status_code_is_(self, expected_code: int) -> None:
         actual_code = self.response.status_code
         assert actual_code == expected_code, \
-            f"Ожидался статус-код {expected_code}, но получен {actual_code}. Тело ответа: {self.response.text}"
+            f"Ожидался статус-код {expected_code}, но получен {actual_code}."
 
     def validate_response_(self, schema: type[BaseModel]) -> None:
         """

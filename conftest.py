@@ -1,12 +1,12 @@
 import pytest
 import allure
-from playwright.sync_api import sync_playwright, Page
+from playwright.sync_api import sync_playwright
 
 from api.endpoints.auth_endpoint import AuthEndpoint
 from api.endpoints.booking_endpoint import BookingEndpoint
-from api.models.booking_model import BookingResponse
 from api.payloads import booking_payloads
 from ui.pages.check_box_page import CheckBoxPage
+from ui.pages.form_page import FormPage
 from ui.pages.text_box_page import TextBoxPage
 from utils.config import ADMIN_USERNAME, ADMIN_PASSWORD
 
@@ -16,7 +16,7 @@ from utils.config import ADMIN_USERNAME, ADMIN_PASSWORD
 @pytest.fixture(scope="function")
 def page():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False)
         new_page = browser.new_page()
         yield new_page
         browser.close()
@@ -91,22 +91,7 @@ def check_box_page(page) -> CheckBoxPage:
     """Фикстура для создания экземпляра страницы Check Box."""
     return CheckBoxPage(page)
 
-
-# --- УМНАЯ ФИКСТУРА ПАРАМЕТРИЗАЦИИ---
-@pytest.fixture(autouse=True)
-def set_allure_dynamic_title(request):
-    """
-    Фикстура для автоматической установки динамического заголовка Allure
-    для параметризованных тестов.
-    """
-    # Проверяем, есть ли у теста маркер parametrize
-    marker = request.node.get_closest_marker("parametrize")
-    if marker:
-        # Если это параметризованный тест, и в его параметрах есть 'test_id'
-        if "test_id" in request.fixturenames:
-            # Получаем значение test_id для текущего запуска
-            test_id = request.getfixturevalue("test_id")
-            # Получаем оригинальный title из нашего декоратора allure_annotations
-            original_title = getattr(request.node.obj, "__allure_display_name__", request.node.name)
-            # Устанавливаем новый, динамический заголовок
-            allure.dynamic.title(f"{original_title}: {test_id}")
+@pytest.fixture(scope="function")
+def form_page(page) -> FormPage:
+    """Фикстура для создания экземпляра страницы Form Page."""
+    return FormPage(page)
