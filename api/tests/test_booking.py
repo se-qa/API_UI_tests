@@ -1,4 +1,3 @@
-# api/tests/test_booking.py
 import allure
 import pytest
 from api.payloads import booking_payloads
@@ -62,13 +61,6 @@ def test_update_booking_with_invalid_token_negative(booking_endpoint, booking_id
     booking_endpoint.check_status_code_is_(403)
 
 
-@allure_annotations(
-    title="Негативный тест: Попытка обновить бронирование с невалидным токеном",
-    story="Авторизация",
-    description="Проверка, что система не позволяет изменять данные без авторизации.",
-    severity=allure.severity_level.BLOCKER,
-    tags=['API', 'Regression']
-)
 @allure_annotations(
     title="Успешное частичное обновление бронирования",
     story="Обновление бронирования",

@@ -90,3 +90,23 @@ def text_box_page(page) -> TextBoxPage:
 def check_box_page(page) -> CheckBoxPage:
     """Фикстура для создания экземпляра страницы Check Box."""
     return CheckBoxPage(page)
+
+
+# --- УМНАЯ ФИКСТУРА ПАРАМЕТРИЗАЦИИ---
+@pytest.fixture(autouse=True)
+def set_allure_dynamic_title(request):
+    """
+    Фикстура для автоматической установки динамического заголовка Allure
+    для параметризованных тестов.
+    """
+    # Проверяем, есть ли у теста маркер parametrize
+    marker = request.node.get_closest_marker("parametrize")
+    if marker:
+        # Если это параметризованный тест, и в его параметрах есть 'test_id'
+        if "test_id" in request.fixturenames:
+            # Получаем значение test_id для текущего запуска
+            test_id = request.getfixturevalue("test_id")
+            # Получаем оригинальный title из нашего декоратора allure_annotations
+            original_title = getattr(request.node.obj, "__allure_display_name__", request.node.name)
+            # Устанавливаем новый, динамический заголовок
+            allure.dynamic.title(f"{original_title}: {test_id}")
