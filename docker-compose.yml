@@ -10,7 +10,7 @@ services:
       - BASE_URL=${BASE_URL}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-    command: pytest -m "api or ui" --alluredir=allure-results
+    command: pytest -m "api or ui" -n auto --alluredir=allure-results
 
   # Сервис для ПРОСМОТРА ОТЧЕТА
   allure:

@@ -6,3 +6,4 @@ pydantic~=2.11.7
 python-dotenv~=1.1.1
 allure-python-commons~=2.15.0
 pytest-rerunfailures
+pytest-xdist

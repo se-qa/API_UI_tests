@@ -71,7 +71,7 @@ jobs:
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          pytest -m ${{ matrix.test-group }} --alluredir=allure-results
+          pytest -m ${{ matrix.test-group }} -n auto --alluredir=allure-results
       - name: 3. Upload results for ${{ matrix.test-group }}
         uses: actions/upload-artifact@v4
         if: always()
@@ -98,7 +98,7 @@ jobs:
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          pytest -m "${{ github.event.inputs.test_group }}" --alluredir=allure-results
+          pytest -m "${{ github.event.inputs.test_group }}" -n auto --alluredir=allure-results
       - name: 3. Upload test results
         uses: actions/upload-artifact@v4
         if: always()
