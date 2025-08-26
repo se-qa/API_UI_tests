@@ -54,4 +54,4 @@ class FormPage(BasePage):
     @allure.step("Проверка валидации поля '{field_name}' (ошибка)")
     def check_field_is_invalid_(self, field_name: str):
         field_locator = self.get_field_by_name(field_name)
-        expect(field_locator).to_have_css("border-color", "rgb(120, 53, 69)")
+        expect(field_locator).to_have_css("border-color", "rgb(220, 53, 69)")

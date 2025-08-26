@@ -29,7 +29,7 @@ def test_validation_email_positive(form_page) -> None:
     story="Форма Form",
     description="Этот тест проверяет, что обязательные и некорректно заполненные поля подсвечиваются красным.",
     severity=allure.severity_level.CRITICAL,
-    tags=['UI', 'Regression', 'Negative']
+    tags=['UI', 'Regression']
 )
 @pytest.mark.parametrize(
     "first_name, last_name, email, field_to_check, test_id",
