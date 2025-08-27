@@ -56,7 +56,7 @@ jobs:
       - name: 5. Run ${{ matrix.tool }}
         run: |
           if [ "${{ matrix.tool }}" == "flake8" ]; then
-            flake8 .
+            flake8 . --max-line-length=120
           elif [ "${{ matrix.tool }}" == "black" ]; then
             black --check .
           elif [ "${{ matrix.tool }}" == "mypy" ]; then

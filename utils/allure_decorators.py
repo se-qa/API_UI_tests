@@ -3,12 +3,17 @@ import allure
 import pytest
 from typing import List
 
+
 def allure_annotations(title: str, description: str, story: str, severity: allure.severity_level, tags: List[str]):
     """
     Универсальный декоратор для Allure и Pytest.
     Принимает список тегов. Первый тег используется для определения Feature (API/UI),
     а все теги из списка применяются как ПРЯМЫЕ маркеры pytest.
 
+    :param title:
+    :param description:
+    :param story:
+    :param severity:
     :param tags: Список тегов, например ["UI", "Smoke", "Regression"]
     """
     if not tags:
@@ -37,4 +42,5 @@ def allure_annotations(title: str, description: str, story: str, severity: allur
             func = marker(func)
 
         return func
+
     return decorator

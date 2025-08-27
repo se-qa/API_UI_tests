@@ -1,6 +1,7 @@
 import allure
 from utils.allure_decorators import allure_annotations
 
+
 @allure_annotations(
     title="Успешное заполнение и проверка формы Text Box",
     story="Форма Text Box",

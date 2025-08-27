@@ -25,6 +25,7 @@ def test_select_checkboxes_positive(check_box_page) -> None:
     # Финальная проверка: убеждаемся, что лишнее не появилось
     check_box_page.check_result_not_contains_text_("documents")
 
+
 @allure_annotations(
     title="Успешный выбор всех чекбоксов в древовидной структуре",
     story="Форма Check Box",

@@ -5,7 +5,6 @@ from ui.data import form_data
 from utils.allure_decorators import allure_annotations
 
 
-
 @allure_annotations(
     title="Успешная валидация поля",
     story="Форма Form",

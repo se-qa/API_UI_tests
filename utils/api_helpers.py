@@ -1,6 +1,7 @@
 import allure
 import json
 
+
 def attach_response(response, name="Response"):
     try:
         body = json.dumps(response.json(), indent=4)

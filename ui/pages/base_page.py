@@ -1,6 +1,7 @@
 import allure
 from playwright.sync_api import Page, expect
 
+
 class BasePage:
     BASE_URL = "https://demoqa.com"
 
