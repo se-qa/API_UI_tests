@@ -1,9 +1,11 @@
 from pydantic import BaseModel
 from typing import Optional
 
+
 class BookingDates(BaseModel):
     checkin: str
     checkout: str
+
 
 class Booking(BaseModel):
     firstname: str
@@ -12,6 +14,7 @@ class Booking(BaseModel):
     depositpaid: bool
     bookingdates: BookingDates
     additionalneeds: Optional[str] = None
+
 
 class BookingResponse(BaseModel):
     bookingid: int

@@ -71,8 +71,6 @@ class BookingEndpoint(BaseApi):
         if self.response.status_code == 200:
             self.validate_response_(Booking)
 
-    # --- МЕТОДЫ ПРОВЕРОК УЖЕ ИМЕЮТ ШАГИ ALLURE, ОНИ ОСТАЮТСЯ КАК ЕСТЬ ---
-
     @allure.step("Проверка: Имя в ответе соответствует '{expected_name}'")
     def check_firstname_is_(self, expected_name: str) -> None:
         validated_data = self.validated_response.booking if isinstance(self.validated_response,
@@ -91,4 +89,5 @@ class BookingEndpoint(BaseApi):
         validated_data = self.validated_response.booking if isinstance(self.validated_response,
                                                                        BookingResponse) else self.validated_response
         actual_lastname = validated_data.lastname
-        assert actual_lastname == expected_lastname, f"Ожидалась фамилия '{expected_lastname}', получено '{actual_lastname}'"
+        assert actual_lastname == expected_lastname, (f"Ожидалась фамилия '{expected_lastname}', "
+                                                      f"получено '{actual_lastname}'")

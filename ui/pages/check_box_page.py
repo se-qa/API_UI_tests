@@ -76,7 +76,7 @@ class CheckBoxPage(BasePage):
         unchecked_count = self.all_uncheck_checkboxes.count()
         self.home_checkbox.click()
         checked_count = self.all_check_checkboxes.count()
-        result_box_titles = self.all_span_titles.count()
+        self.all_span_titles.count()
 
         # Добавляем в отчет Allure полезную информацию для отладки
         allure.attach(

@@ -80,7 +80,7 @@ def test_partial_update_booking_positive(booking_endpoint, booking_id, auth_toke
     # Проверка 1: Убеждаемся, что обновленные поля изменились
     booking_endpoint.check_firstname_is_(booking_payloads.PARTIAL_UPDATE_BOOKING["firstname"])
 
-    # Проверка 2: Убеждаемся, что НЕобновленные поля остались прежними
+    # Проверка 2: Убеждаемся, что не обновленные поля остались прежними
     booking_endpoint.check_lastname_is_(booking_payloads.VALID_BOOKING["lastname"])
 
 

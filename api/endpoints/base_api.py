@@ -1,8 +1,9 @@
 # api/endpoints/base_api.py
 import allure
 from requests import Response
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from typing import Any
+
 
 class BaseApi:
     response: Response

@@ -4,6 +4,7 @@ from utils.config import BASE_URL
 from api.endpoints.base_api import BaseApi
 from utils.api_helpers import attach_response
 
+
 class AuthEndpoint(BaseApi):
     AUTH_URL = f"{BASE_URL}/auth"
 

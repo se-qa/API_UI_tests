@@ -1,3 +1,5 @@
+from typing import Any, Generator
+
 import pytest
 import allure
 from playwright.sync_api import sync_playwright
@@ -22,12 +24,11 @@ def page():
         browser.close()
 
 
-def pytest_exception_interact(node, call, report):
+def pytest_exception_interact(node):
     """
     Этот хук делает скриншот страницы в случае падения UI-теста и прикрепляет его к Allure-отчету.
     """
-    # --- НОВАЯ, БОЛЕЕ НАДЕЖНАЯ ПРОВЕРКА ---
-    # 1. Проверяем, есть ли у 'node' вообще атрибут 'funcargs' (т.е. является ли он функцией).
+    # 1. Проверяем, есть ли у 'node' вообще атрибут 'funcargs' (т.е. Является ли он функцией).
     # 2. И только потом проверяем, есть ли в этом словаре фикстура 'page'.
     if hasattr(node, "funcargs") and "page" in node.funcargs:
         page = node.funcargs["page"]
@@ -64,7 +65,7 @@ def auth_token(auth_endpoint: AuthEndpoint) -> str:
 
 
 @pytest.fixture(scope="function")
-def booking_id(booking_endpoint: BookingEndpoint, auth_token: str) -> int:
+def booking_id(booking_endpoint: BookingEndpoint, auth_token: str) -> Generator[int, Any, None]:
     # --- SETUP ---
     payload = booking_payloads.VALID_BOOKING
     # Действие теперь возвращает ID напрямую
@@ -86,10 +87,12 @@ def text_box_page(page) -> TextBoxPage:
     """Фикстура для создания экземпляра страницы Text Box."""
     return TextBoxPage(page)
 
+
 @pytest.fixture(scope="function")
 def check_box_page(page) -> CheckBoxPage:
     """Фикстура для создания экземпляра страницы Check Box."""
     return CheckBoxPage(page)
+
 
 @pytest.fixture(scope="function")
 def form_page(page) -> FormPage:
