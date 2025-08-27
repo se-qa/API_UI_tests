@@ -24,7 +24,7 @@ def test_create_booking_positive(booking_endpoint) -> None:
     story="Создание бронирования",
     description="Проверка, что система возвращает ошибку при отправке некорректных данных.",
     severity=allure.severity_level.CRITICAL,
-    tags=['API', 'Smoke', 'Regression']
+    tags=['API', 'Regression']
 )
 @pytest.mark.parametrize(
     "payload, expected_status_code, test_id",
