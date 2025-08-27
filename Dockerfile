@@ -1,22 +1,34 @@
-# 1. Используем официальный образ Playwright
+# syntax=docker/dockerfile:1.7
+# 1) Лёгкие правки поверх рабочего варианта
 FROM mcr.microsoft.com/playwright/python:v1.54.0
 
-# 2. Устанавливаем Java для Allure
-RUN apt-get update && apt-get install -y default-jre
+# Чуть чище вывод/кеши pip
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
-# 3. Устанавливаем Allure Commandline
+# 2) Java для Allure (headless — меньше весит) + уборка apt-кэша
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openjdk-17-jre-headless ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
+
+# 3) Allure CLI (прикалываем в /usr/local/bin) + аккуратная распаковка
 ARG ALLURE_VERSION=2.34.1
-RUN curl -sSL "https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz" -o allure.tgz && \
-    tar -zxvf allure.tgz -C /opt && \
-    rm allure.tgz && \
-    ln -s /opt/allure-${ALLURE_VERSION}/bin/allure /usr/bin/allure
+RUN set -eux; \
+    curl -fsSL -o /tmp/allure.tgz "https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz"; \
+    tar -xzf /tmp/allure.tgz -C /opt; \
+    ln -sf /opt/allure-${ALLURE_VERSION}/bin/allure /usr/local/bin/allure; \
+    rm /tmp/allure.tgz
 
-# 4. Устанавливаем рабочую директорию
+# 4) Рабочая директория — остаётся как у тебя
 WORKDIR /app
 
-# 5. Копируем и устанавливаем Python-зависимости
+# 5) Сначала зависимости — лучше кешируется
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN python -m pip install --upgrade pip \
+ && pip install --no-cache-dir -r requirements.txt
 
-# 6. Копируем остальной код проекта
+# 6) Потом код проекта
 COPY . .
+
+# (опционально) дефолтная команда, если запускаешь контейнер вручную
+# CMD ["pytest", "-n", "auto", "--alluredir=allure-results"]
