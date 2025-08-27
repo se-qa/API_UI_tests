@@ -20,7 +20,6 @@ def invalid_form_data():
     return [case1, case2, case3, case4]
 
 
-# V-- ИЗМЕНЯЕМ ЭТУ ФУНКЦИЮ --V
 def get_invalid_data_ids():
     """
     Возвращает ГОТОВЫЙ СПИСОК ID для параметризации.
