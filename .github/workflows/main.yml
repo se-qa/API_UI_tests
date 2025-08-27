@@ -102,7 +102,7 @@ jobs:
           path: allure-results
 
   publish-report:
-    needs: [run-tests-parallel, run-tests-manual]
+    needs: [ run-tests-parallel, run-tests-manual ]
     if: always()
     runs-on: ubuntu-latest
     steps:
