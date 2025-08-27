@@ -49,13 +49,14 @@ smoke-tests:
   needs: [build]
   script:
     - |
+      mkdir -p allure-results-smoke
       docker run --rm --ipc=host --init \
         -v $(pwd)/allure-results-smoke:/app/allure-results \
         -e BASE_URL=$BASE_URL \
         -e ADMIN_USERNAME=$ADMIN_USERNAME \
         -e ADMIN_PASSWORD=$ADMIN_PASSWORD \
         $IMAGE_NAME:$IMAGE_TAG \
-        pytest -m smoke -n auto --alluredir=allure-results
+        pytest -m smoke -n auto --alluredir=/app/allure-results || true
   artifacts:
     paths:
       - allure-results-smoke
@@ -75,13 +76,14 @@ run-tests-parallel:
       - TEST_GROUP: ui
   script:
     - |
+      mkdir -p allure-results-${TEST_GROUP}
       docker run --rm --ipc=host --init \
         -v $(pwd)/allure-results-${TEST_GROUP}:/app/allure-results \
         -e BASE_URL=$BASE_URL \
         -e ADMIN_USERNAME=$ADMIN_USERNAME \
         -e ADMIN_PASSWORD=$ADMIN_PASSWORD \
         $IMAGE_NAME:$IMAGE_TAG \
-        pytest -m $TEST_GROUP -n auto --alluredir=allure-results
+        pytest -m $TEST_GROUP -n auto --alluredir=/app/allure-results || true
   artifacts:
     paths:
       - allure-results-${TEST_GROUP}
@@ -92,12 +94,16 @@ run-tests-parallel:
 publish-report:
   stage: report
   image: openjdk:17-jdk-slim
-  needs: [run-tests-parallel]
+  needs: [smoke-tests, run-tests-parallel]
   script:
     - apt-get update && apt-get install -y wget unzip
     - wget https://github.com/allure-framework/allure2/releases/download/2.34.1/allure-2.34.1.zip
     - unzip allure-2.34.1.zip
-    - ./allure-2.34.1/bin/allure generate allure-results* --clean -o allure-report
+    - mkdir -p merged-results
+    - cp -r allure-results-smoke/* merged-results/ || true
+    - cp -r allure-results-api/* merged-results/ || true
+    - cp -r allure-results-ui/* merged-results/ || true
+    - ./allure-2.34.1/bin/allure generate merged-results --clean -o allure-report || true
   artifacts:
     paths:
       - allure-report
