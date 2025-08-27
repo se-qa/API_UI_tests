@@ -47,11 +47,13 @@ def invalid_booking_data():
 def invalid_booking_data_ids():
     return [case[2] for case in invalid_booking_data()]
 
+
 # 4. Данные для частичного обновления (PATCH)
 PARTIAL_UPDATE_BOOKING = {
     "firstname": "James",
     "totalprice": 700
 }
+
 
 # Функция для параметризации негативных тестов с невалидными данными
 def invalid_patch_data():
@@ -59,6 +61,7 @@ def invalid_patch_data():
     # Случай: Некорректный тип данных для 'depositpaid'
     case1 = ({"depositpaid": "not-a-boolean"}, 400, "invalid_depositpaid_type")
     return [case1]
+
 
 def invalid_patch_data_ids():
     """Возвращает ID для параметризации."""
