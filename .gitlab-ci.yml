@@ -41,7 +41,7 @@ build:
     - main
     - master
 
-# ---------------- SMOKE TESTS1 ----------------
+# ---------------- SMOKE TESTS ----------------
 smoke-tests:
   stage: test
   needs: [build]
