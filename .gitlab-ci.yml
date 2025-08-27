@@ -47,11 +47,9 @@ smoke-tests:
   services:
     - docker:dind
   needs: [build]
-  before_script:
-    - echo $CI_JOB_TOKEN | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
-    - docker pull $IMAGE_NAME:$IMAGE_TAG
   script:
-    - docker run --rm --ipc=host --init \
+    - |
+      docker run --rm --ipc=host --init \
         -v $(pwd)/allure-results-smoke:/app/allure-results \
         -e BASE_URL=$BASE_URL \
         -e ADMIN_USERNAME=$ADMIN_USERNAME \
@@ -75,11 +73,9 @@ run-tests-parallel:
     matrix:
       - TEST_GROUP: api
       - TEST_GROUP: ui
-  before_script:
-    - echo $CI_JOB_TOKEN | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
-    - docker pull $IMAGE_NAME:$IMAGE_TAG
   script:
-    - docker run --rm --ipc=host --init \
+    - |
+      docker run --rm --ipc=host --init \
         -v $(pwd)/allure-results-${TEST_GROUP}:/app/allure-results \
         -e BASE_URL=$BASE_URL \
         -e ADMIN_USERNAME=$ADMIN_USERNAME \
