@@ -197,9 +197,9 @@ jobs:
             -d parse_mode=Markdown \
             -d text="*✅ Pipeline Status:* ${STATUS}
 
-  *📦 Repo:* [${{ github.repository }}](https://github.com/${{ github.repository }})
-  *🌿 Branch:* \`${{ github.ref_name }}\`
-  *📝 Commit:* ${COMMIT_MSG}
-  *👤 Triggered by:* ${{ github.actor }}
-
-  [ 📊 Allure Report ](${REPORT_URL})"
+          *📦 Repo:* [${{ github.repository }}](https://github.com/${{ github.repository }})
+          *🌿 Branch:* \`${{ github.ref_name }}\`
+          *📝 Commit:* ${COMMIT_MSG}
+          *👤 Triggered by:* ${{ github.actor }}
+        
+          [ 📊 Allure Report ](${REPORT_URL})"
