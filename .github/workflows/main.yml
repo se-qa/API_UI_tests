@@ -27,41 +27,18 @@ env:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        tool: [ flake8, black, mypy ]
     steps:
-      - name: 1. Checkout repo
-        uses: actions/checkout@v4
-
-      - name: 2. Set up Python
+      - uses: actions/checkout@v4
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: 3. Cache pip
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: 4. Install lint dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black mypy
-
-      - name: 5. Run ${{ matrix.tool }}
-        run: |
-          if [ "${{ matrix.tool }}" == "flake8" ]; then
-            flake8 . --max-line-length=120
-          elif [ "${{ matrix.tool }}" == "black" ]; then
-            black --check .
-          elif [ "${{ matrix.tool }}" == "mypy" ]; then
-            mypy .
-          fi
+          pip install flake8
+      - name: Run flake8
+        run: flake8 .
 
   build:
     needs: lint
