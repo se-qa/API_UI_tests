@@ -71,8 +71,6 @@ jobs:
   smoke-tests:
     needs: build
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
     steps:
       - run: >
           docker run --rm --ipc=host --init
