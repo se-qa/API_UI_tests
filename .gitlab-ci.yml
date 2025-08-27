@@ -1,11 +1,6 @@
-stages:
-  - test
-
-check-runner:
-  stage: test
-  tags:
-    - windows
-    - python
+check-docker:
+  stage: build
+  tags: ["windows", "python"]
   script:
-    - python --version
-    - echo "Runner работает!"
+    - docker --version
+    - docker ps
