@@ -1,6 +1,7 @@
-check-docker:
+build-test:
   stage: build
   tags: ["windows", "python"]
   script:
-    - docker --version
-    - docker ps
+    - echo $CI_JOB_TOKEN | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
+    - docker build -t test-image:$CI_COMMIT_SHORT_SHA .
+    - docker images | findstr test-image
