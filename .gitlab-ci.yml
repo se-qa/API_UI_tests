@@ -47,6 +47,9 @@ smoke-tests:
   services:
     - docker:dind
   needs: [build]
+  before_script:
+    - echo $CI_JOB_TOKEN | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
+    - docker pull $IMAGE_NAME:$IMAGE_TAG
   script:
     - docker run --rm --ipc=host --init \
         -v $(pwd)/allure-results-smoke:/app/allure-results \
@@ -72,6 +75,9 @@ run-tests-parallel:
     matrix:
       - TEST_GROUP: api
       - TEST_GROUP: ui
+  before_script:
+    - echo $CI_JOB_TOKEN | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY
+    - docker pull $IMAGE_NAME:$IMAGE_TAG
   script:
     - docker run --rm --ipc=host --init \
         -v $(pwd)/allure-results-${TEST_GROUP}:/app/allure-results \
@@ -116,7 +122,7 @@ pages:
     - main
     - master
 
-# ---------------- TELEGRAM NOTIFY1 ----------------
+# ---------------- TELEGRAM NOTIFY ----------------
 notify-telegram:
   stage: notify
   image: curlimages/curl:8.4.0
