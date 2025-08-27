@@ -68,13 +68,16 @@ jobs:
         test-group: [ api, ui ] # Наша матрица для параллелизма
     steps:
       - name: 1. Run tests for ${{ matrix.test-group }}
+        env: # <-- Создаем переменные окружения для этого шага
+          IMAGE_NAME: ${{ needs.build.outputs.image_name }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         run: >
           docker run --rm --ipc=host --init
           -v $(pwd)/allure-results-${{ matrix.test-group }}:/app/allure-results
           -e BASE_URL=${{ secrets.BASE_URL }}
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
-          ${{ needs.build.outputs.image_name }}:${{ needs.build.outputs.image_tag }}
+          $IMAGE_NAME:$IMAGE_TAG
           pytest -m ${{ matrix.test-group }} -n auto --alluredir=allure-results
 
       - name: 2. Upload results for ${{ matrix.test-group }}
@@ -92,13 +95,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 1. Run selected test group
+        env:
+          IMAGE_NAME: ${{ needs.build.outputs.image_name }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         run: >
           docker run --rm --ipc=host --init
           -v $(pwd)/allure-results:/app/allure-results
           -e BASE_URL=${{ secrets.BASE_URL }}
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
-          ${{ needs.build.outputs.image_name }}:${{ needs.build.outputs.image_tag }}
+          $IMAGE_NAME:$IMAGE_TAG
           pytest -m "${{ github.event.inputs.test_group }}" -n auto --alluredir=allure-results
 
       - name: 2. Upload test results
@@ -129,12 +135,14 @@ jobs:
           echo "COMMIT_HASH=${{ github.sha }}" >> allure-results/environment.properties
 
       - name: 3. Generate Allure Report
-        # ИСПОЛЬЗУЕМ НАШ СОБСТВЕННЫЙ ОБРАЗ!
+        env: # <-- И ЗДЕСЬ ТОЖЕ СОЗДАЕМ ПЕРЕМЕННЫЕ
+          IMAGE_NAME: ${{ needs.build.outputs.image_name }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         run: >
           docker run --rm 
           -v $(pwd)/allure-results:/app/allure-results
           -v $(pwd)/allure-report:/app/allure-report
-          ${{ needs.build.outputs.image_name }}:${{ needs.build.outputs.image_tag }}
+          $IMAGE_NAME:$IMAGE_TAG
           allure generate allure-results --clean -o allure-report
 
       - name: 4. Upload artifact for GitHub Pages
