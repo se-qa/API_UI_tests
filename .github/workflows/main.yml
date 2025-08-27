@@ -24,6 +24,9 @@ jobs:
   # ЗАДАНИЕ 1: Сборка образа (остается без изменений, оно работает)
   build:
     runs-on: ubuntu-latest
+    outputs:
+      image_name: ${{ steps.create_names.outputs.image_name }}
+      image_tag: ${{ steps.create_names.outputs.image_tag }}
     steps:
       - name: 1. Get code from repository
         uses: actions/checkout@v4
@@ -39,16 +42,17 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 4. Create lower-case image name and unique tag
+        id: create_names
         run: |
-          echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+          echo "image_name=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+          echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: 5. Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          tags: ${{ steps.create_names.outputs.image_name }}:${{ steps.create_names.outputs.image_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -63,22 +67,17 @@ jobs:
       matrix:
         test-group: [ api, ui ] # Наша матрица для параллелизма
     steps:
-      - name: 1. Create image name and tag
-        run: |
-          echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
-
-      - name: 2. Run tests for ${{ matrix.test-group }}
+      - name: 1. Run tests for ${{ matrix.test-group }}
         run: >
           docker run --rm --ipc=host --init
           -v $(pwd)/allure-results-${{ matrix.test-group }}:/app/allure-results
           -e BASE_URL=${{ secrets.BASE_URL }}
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
-          ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          ${{ needs.build.outputs.image_name }}:${{ needs.build.outputs.image_tag }}
           pytest -m ${{ matrix.test-group }} -n auto --alluredir=allure-results
 
-      - name: 3. Upload results for ${{ matrix.test-group }}
+      - name: 2. Upload results for ${{ matrix.test-group }}
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -92,22 +91,17 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Create image name and tag
-        run: |
-          echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
-
-      - name: 2. Run selected test group
+      - name: 1. Run selected test group
         run: >
           docker run --rm --ipc=host --init
           -v $(pwd)/allure-results:/app/allure-results
           -e BASE_URL=${{ secrets.BASE_URL }}
           -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
           -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
-          ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          ${{ needs.build.outputs.image_name }}:${{ needs.build.outputs.image_tag }}
           pytest -m "${{ github.event.inputs.test_group }}" -n auto --alluredir=allure-results
 
-      - name: 3. Upload test results
+      - name: 2. Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -120,18 +114,13 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Create image name and tag
-        run: |
-          echo "IMAGE_NAME=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
-
-      - name: 2. Download all test results
+      - name: 1. Download all test results
         uses: actions/download-artifact@v4
         with:
           path: allure-results
           merge-multiple: true
 
-      - name: 3. Create Allure environment file
+      - name: 2. Create Allure environment file
         run: |
           echo "STAND_URL=${{ secrets.BASE_URL }}" >> allure-results/environment.properties
           echo "BROWSER=Chromium (in Docker)" >> allure-results/environment.properties
@@ -139,16 +128,16 @@ jobs:
           echo "BRANCH=${{ github.ref_name }}" >> allure-results/environment.properties
           echo "COMMIT_HASH=${{ github.sha }}" >> allure-results/environment.properties
 
-      - name: 4. Generate Allure Report
+      - name: 3. Generate Allure Report
         # ИСПОЛЬЗУЕМ НАШ СОБСТВЕННЫЙ ОБРАЗ!
         run: >
           docker run --rm 
           -v $(pwd)/allure-results:/app/allure-results
           -v $(pwd)/allure-report:/app/allure-report
-          ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          ${{ needs.build.outputs.image_name }}:${{ needs.build.outputs.image_tag }}
           allure generate allure-results --clean -o allure-report
 
-      - name: 5. Upload artifact for GitHub Pages
+      - name: 4. Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./allure-report # Указываем папку с готовым отчетом
