@@ -116,7 +116,7 @@ pages:
     - main
     - master
 
-# ---------------- TELEGRAM NOTIFY ----------------
+# ---------------- TELEGRAM NOTIFY1 ----------------
 notify-telegram:
   stage: notify
   image: curlimages/curl:8.4.0
