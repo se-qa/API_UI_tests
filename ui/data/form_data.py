@@ -22,7 +22,7 @@ def invalid_form_data():
 
 def get_invalid_data_ids():
     """
-    Возвращает ГОТОВЫЙ СПИСОК ID для параметризации.
+    Возвращает ГОТОВЫЙ СПИСОК ID для параметризации
     """
     # Мы просто извлекаем пятый элемент (test_id) из каждого набора данных
     return [item[4] for item in invalid_form_data()]
