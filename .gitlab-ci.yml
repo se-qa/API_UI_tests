@@ -127,25 +127,33 @@ pages:
 # ---------- TELEGRAM ----------
 notify-telegram:
   stage: notify
-  image: curlimages/curl:8.4.0
+  image: curlimages/curl:latest # Используем latest, он обычно стабилен
   needs:
     - job: pages
-      optional: true
+      optional: true # Запустится, даже если pages не было
   when: always
-  script: |
-    STATUS=$CI_JOB_STATUS
-    REPORT_URL="https://$CI_PROJECT_NAMESPACE.gitlab.io/$CI_PROJECT_NAME/"
-    # экранируем спецсимволы для MarkdownV2
-    COMMIT_MSG=$(echo "$CI_COMMIT_MESSAGE" | sed -r 's/([_*[\]()~`>#+=|{}.!-])/\\\1/g')
+  script:
+    - |
+      # 1. Устанавливаем статус пайплайна
+      PIPELINE_STATUS="${CI_JOB_STATUS}" # Используем ${} для большей надежности
 
-    MSG="*✅ Pipeline Status:* ${STATUS}%0A\
-    *📦 Repo:* [${CI_PROJECT_NAME}](${CI_PROJECT_URL})%0A\
-    *🌿 Branch:* \`${CI_COMMIT_REF_NAME}\`%0A\
-    *📝 Commit:* ${COMMIT_MSG}%0A\
-    *👤 Triggered by:* ${GITLAB_USER_NAME}%0A\
-    [📊 Allure Report](${REPORT_URL})"
+      # 2. Формируем URL отчета
+      REPORT_URL="https://${CI_PROJECT_NAMESPACE}.gitlab.io/${CI_PROJECT_NAME}/"
 
-    curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
-      -d chat_id="$TELEGRAM_CHAT_ID" \
-      -d parse_mode=MarkdownV2 \
-      -d text="$MSG"
+      # 3. Экранируем сообщение коммита. Этот синтаксис sed более надежен.
+      # Мы просто добавляем \ перед каждым из перечисленных символов.
+      COMMIT_MSG=$(echo "${CI_COMMIT_MESSAGE}" | sed 's/\([_*[\]()~`>#+-=|{}.!]\)/\\&/g')
+
+      # 4. Формируем сообщение для Telegram. %0A - это перевод строки.
+      MESSAGE="✅ *Pipeline Status:* ${PIPELINE_STATUS}%0A%0A"
+      MESSAGE+="📦 *Repo:* [${CI_PROJECT_NAME}](${CI_PROJECT_URL})%0A"
+      MESSAGE+="🌿 *Branch:* \`${CI_COMMIT_REF_NAME}\`%0A"
+      MESSAGE+="📝 *Commit:* ${COMMIT_MSG}%0A"
+      MESSAGE+="👤 *Triggered by:* ${GITLAB_USER_NAME}%0A%0A"
+      MESSAGE+="[📊 Allure Report](${REPORT_URL})"
+      
+      # 5. Отправляем сообщение с помощью curl. Используем --data-urlencode для text.
+      curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+        --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+        -d "parse_mode=MarkdownV2" \
+        --data-urlencode "text=${MESSAGE}"
