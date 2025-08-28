@@ -133,11 +133,9 @@ notify-telegram:
       optional: true
   when: always
   script: |
-    apk add --no-cache perl
-
     STATUS=$CI_JOB_STATUS
     REPORT_URL="https://$CI_PROJECT_NAMESPACE.gitlab.io/$CI_PROJECT_NAME/"
-    COMMIT_MSG=$(printf "%s" "$CI_COMMIT_MESSAGE" | perl -pe 's/([_*\[\]()~`>#+\-=|{}.!])/\\$1/g')
+    COMMIT_MSG=$(printf "%s" "$CI_COMMIT_MESSAGE" | sed -e 's/[]`_*~()[]#+=|{}.!>-]/\\&/g')
 
     curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
       -d chat_id="$TELEGRAM_CHAT_ID" \
