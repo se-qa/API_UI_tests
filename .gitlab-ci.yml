@@ -43,7 +43,7 @@ smoke-tests:
   needs: [build]
   script:
     - mkdir -p allure-results-smoke
-    - export DECODED_ADMIN_USERNAME=$(echo $BASE64_ADMIN_USERNAME | base64 -d)
+    - export DECODED_ADMIN_USERNAME=$(echo $ADMIN_USERNAME | base64 -d)
     - >
       docker run --rm --ipc=host --init
       -v $(pwd)/allure-results-smoke:/app/allure-results
@@ -69,7 +69,7 @@ run-tests-parallel:
       - TEST_GROUP: ui
   script:
     - mkdir -p allure-results-${TEST_GROUP}
-    - export DECODED_ADMIN_USERNAME=$(echo $BASE64_ADMIN_USERNAME | base64 -d)
+    - export DECODED_ADMIN_USERNAME=$(echo $ADMIN_USERNAME | base64 -d)
     - >
       docker run --rm --ipc=host --init
       -v $(pwd)/allure-results-${TEST_GROUP}:/app/allure-results
