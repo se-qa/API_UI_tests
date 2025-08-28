@@ -136,7 +136,7 @@ notify-telegram:
     STATUS=$CI_JOB_STATUS
     REPORT_URL="https://$CI_PROJECT_NAMESPACE.gitlab.io/$CI_PROJECT_NAME/"
     # экранируем спецсимволы для MarkdownV2
-    COMMIT_MSG=$(echo "$CI_COMMIT_MESSAGE" | sed -r 's/([_*\\[\\]()~`>#+\-=|{}.!])/\\\1/g')
+    COMMIT_MSG=$(echo "$CI_COMMIT_MESSAGE" | sed -r 's/([_*[\]()~`>#+=|{}.!-])/\\\1/g')
 
     MSG="*✅ Pipeline Status:* ${STATUS}%0A\
     *📦 Repo:* [${CI_PROJECT_NAME}](${CI_PROJECT_URL})%0A\
