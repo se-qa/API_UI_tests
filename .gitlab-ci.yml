@@ -127,33 +127,24 @@ pages:
 # ---------- TELEGRAM ----------
 notify-telegram:
   stage: notify
-  image: curlimages/curl:latest
+  image: curlimages/curl:8.4.0
   needs:
     - job: pages
       optional: true
   when: always
-  script:
-    - |
-      # 1. Подготовка переменных
-      STATUS="${CI_JOB_STATUS}"
-      REPORT_URL="https://${CI_PROJECT_NAMESPACE}.gitlab.io/${CI_PROJECT_NAME}/"
-      
-      # 2. Экранируем commit message. Этот sed-скрипт гарантированно экранирует
-      # все спецсимволы, требуемые MarkdownV2.
-      COMMIT_MSG=$(printf "%s" "${CI_COMMIT_MESSAGE}" | sed -e 's/\([_*\[\]()~`>#+-=|{}.!]\)/\\&/g')
-      
-      # 3. Формируем тело сообщения в ОДНОЙ переменной, используя %0A для переноса строк.
-      # Это самый надежный способ для передачи в curl.
-      MESSAGE="*✅ Pipeline Status:* ${STATUS}%0A%0A"
-      MESSAGE="${MESSAGE}*📦 Repo:* [${CI_PROJECT_NAME}](${CI_PROJECT_URL})%0A"
-      MESSAGE="${MESSAGE}*🌿 Branch:* \`${CI_COMMIT_REF_NAME}\`%0A"
-      MESSAGE="${MESSAGE}*📝 Commit:* ${COMMIT_MSG}%0A"
-      MESSAGE="${MESSAGE}*👤 Triggered by:* ${GITLAB_USER_NAME}%0A%0A"
-      MESSAGE="${MESSAGE}[📊 Allure Report](${REPORT_URL})"
-      
-      # 4. Отправляем сообщение, используя --data-urlencode для всего текста.
-      # Это гарантирует, что все символы будут правильно переданы.
-      curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-        --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-        -d "parse_mode=MarkdownV2" \
-        --data-urlencode "text=${MESSAGE}"
+  script: |
+    STATUS=$CI_JOB_STATUS
+    REPORT_URL="https://$CI_PROJECT_NAMESPACE.gitlab.io/$CI_PROJECT_NAME/"
+    COMMIT_MSG=$(printf "%s" "$CI_COMMIT_MESSAGE" | sed -r 's/([_*`()~>#+=|{}.!-])/\\\1/g')
+
+    curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+      -d chat_id="$TELEGRAM_CHAT_ID" \
+      -d parse_mode=MarkdownV2 \
+      -d text="*✅ Pipeline Status:* ${STATUS}
+
+    *📦 Repo:* [${CI_PROJECT_NAME}](${CI_PROJECT_URL})
+    *🌿 Branch:* \`${CI_COMMIT_REF_NAME}\`
+    *📝 Commit:* ${COMMIT_MSG}
+    *👤 Triggered by:* ${GITLAB_USER_NAME}
+    
+    [📊 Allure Report](${REPORT_URL})"
