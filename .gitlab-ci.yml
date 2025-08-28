@@ -135,16 +135,16 @@ notify-telegram:
   script: |
     STATUS=$CI_JOB_STATUS
     REPORT_URL="https://$CI_PROJECT_NAMESPACE.gitlab.io/$CI_PROJECT_NAME/"
-    COMMIT_MSG=$(printf "%s" "$CI_COMMIT_MESSAGE" | sed -r 's/([_*`()~>#+=|{}.!-\[|\]])/\\\1/g')
+    COMMIT_MSG=$(printf "%s" "$CI_COMMIT_MESSAGE" | sed -r 's/([_*`()~>#+=|{}.!-])/\\\1/g')
 
     curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
       -d chat_id="$TELEGRAM_CHAT_ID" \
-      -d parse_mode=MarkdownV2 \
-      -d text="*✅ Pipeline Status:* ${STATUS}
+      -d parse_mode=HTML \
+      -d text="<b>✅ Pipeline Status:</b> ${STATUS}
 
-    *📦 Repo:* [${CI_PROJECT_NAME}](${CI_PROJECT_URL})
-    *🌿 Branch:* \`${CI_COMMIT_REF_NAME}\`
-    *📝 Commit2:* ${COMMIT_MSG}
-    *👤 Triggered by:* ${GITLAB_USER_NAME}
+    <b>📦 Repo:</b> <a href=\"${CI_PROJECT_URL}\">${CI_PROJECT_NAME}</a>
+    <b>🌿 Branch:</b> <code>${CI_COMMIT_REF_NAME}</code>
+    <b>📝 Commit:</b> ${CI_COMMIT_MESSAGE}
+    <b>👤 Triggered by:</b> ${GITLAB_USER_NAME}
     
-    [📊 Allure Report](${REPORT_URL})"
+    <a href=\"${REPORT_URL}\">📊 Allure Report</a>"
