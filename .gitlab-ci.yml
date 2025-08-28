@@ -135,7 +135,7 @@ notify-telegram:
   script: |
     STATUS=$CI_JOB_STATUS
     REPORT_URL="https://$CI_PROJECT_NAMESPACE.gitlab.io/$CI_PROJECT_NAME/"
-    COMMIT_MSG=$(echo "$CI_COMMIT_MESSAGE" | sed -E 's/([_*[\]()~`>#+\-=|{}.!])/\\\1/g')
+    COMMIT_MSG=$(echo "$CI_COMMIT_MESSAGE" | sed -E 's/([_*\[\]()~`>#+\-=|{}.!])/\\\1/g')
 
     curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
       -d chat_id="$TELEGRAM_CHAT_ID" \
