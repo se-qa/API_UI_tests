@@ -144,7 +144,7 @@ notify-telegram:
 
     *📦 Repo:* [${CI_PROJECT_NAME}](${CI_PROJECT_URL})
     *🌿 Branch:* \`${CI_COMMIT_REF_NAME}\`
-    *📝 Commit:* ${COMMIT_MSG}
+    *📝 Commit2:* ${COMMIT_MSG}
     *👤 Triggered by:* ${GITLAB_USER_NAME}
     
     [📊 Allure Report](${REPORT_URL})"
